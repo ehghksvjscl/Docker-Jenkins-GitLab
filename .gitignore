@@ -1,0 +1,7 @@
+gitlab/config/*
+gitlab/data/*
+gitlab/logs/*
+
+!gitlab/config/gitlab.rb
+!gitlab/data/.gitkeep
+!gitlab/logs/.gitkeep

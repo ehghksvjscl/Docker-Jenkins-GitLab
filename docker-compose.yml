@@ -1,0 +1,34 @@
+version: '3'
+
+services: 
+
+  nginx:
+    image: nginx
+    links:
+      - jenkins
+      - gitlab
+    volumes: 
+      - ./nginx/jenkins.conf:/etc/nginx/conf.d/jenkins.conf
+      - ./nginx/gitlab.conf:/etc/nginx/conf.d/gitlab.conf
+    ports:
+     - 80:80
+
+  jenkins:
+    image: jenkins:2.46.2
+    ports: 
+      - 50000:50000
+    volumes: 
+     - jenkins_data:/var/jenkins_home
+
+  gitlab:
+    image: gitlab/gitlab-ce
+    links: 
+      - jenkins:jenkins.agiletesters.com
+    volumes: 
+      - ./gitlab/config:/etc/gitlab
+      - ./gitlab/logs:/var/log/gitlab
+      - ./gitlab/data:/var/opt/gitlab
+    restart: always
+
+volumes: 
+  jenkins_data:

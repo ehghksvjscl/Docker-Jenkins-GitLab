@@ -13,10 +13,13 @@ services:
     ports:
      - 80:80
 
+
   jenkins:
     image: jenkins:2.46.2
     ports: 
       - 50000:50000
+    links: 
+      - gitlab:code.agiletesters.com
     volumes: 
      - jenkins_data:/var/jenkins_home
 
@@ -32,3 +35,7 @@ services:
 
 volumes: 
   jenkins_data:
+
+networks:
+ default:
+   driver: bridge

@@ -8,25 +8,30 @@ services:
       - jenkins
       - gitlab
     volumes: 
-      - ./nginx/jenkins.conf:/etc/nginx/conf.d/jenkins.conf
+      # - ./nginx/jenkins.conf:/etc/nginx/conf.d/jenkins.conf
       - ./nginx/gitlab.conf:/etc/nginx/conf.d/gitlab.conf
     ports:
      - 80:80
 
 
   jenkins:
-    image: jenkins:2.46.2
+    container_name: jenkins
+    image: jenkins
+    build: 
+      dockerfile: jenkins/Dockerfile
+      context: .
     ports: 
       - 50000:50000
+      - 8080:8080
     links: 
-      - gitlab:code.agiletesters.com
+      - gitlab
     volumes: 
      - jenkins_data:/var/jenkins_home
+     - /var/run/docker.sock:/var/run/docker.sock
+     - jenkins_temp:/results
 
   gitlab:
     image: gitlab/gitlab-ce
-    links: 
-      - jenkins:jenkins.agiletesters.com
     volumes: 
       - ./gitlab/config:/etc/gitlab
       - ./gitlab/logs:/var/log/gitlab
@@ -35,6 +40,7 @@ services:
 
 volumes: 
   jenkins_data:
+  jenkins_temp:
 
 networks:
  default:

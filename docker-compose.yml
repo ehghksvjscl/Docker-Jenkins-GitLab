@@ -41,7 +41,3 @@ services:
 volumes: 
   jenkins_data:
   jenkins_temp:
-
-networks:
- default:
-   driver: bridge

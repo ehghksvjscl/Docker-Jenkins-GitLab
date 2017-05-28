@@ -6,14 +6,18 @@ Adicionar o repositório ao gitlab
 
 1. create a project on gitlab
 
-git remote add origin http:root@code.agiletesters.com/root/todo-app.git
+git remote add origin http:root@gitlab/root/todo-app.git
+
+1. Alterar branch default para develop
+
+
 
 
 Criar Job no Jenkins
 =====http:gitlab/root/todo-app.git=
 Configurar Job 
 adicinar credenciais
-Testar o scan
+
 
 Iniciar Jenkinsfile
 =====
@@ -122,8 +126,45 @@ node(){
 }
 ```
 
+Pipeline Production
+======
+Criar credenciais para download do Oracle JDK
+Criar um no na AWS
+http://jenkins:8080/computer/createItem
+
+
+
+Introduzindo um Bug
+======
+Intruduzir um bug, e fazer rollback da aplicação
+
 
 Plugins
 ====
 - Gitlab Hook Plugin
+- PlueOcean
+
+Unico Branch
+====
+
+- Pipeline de push
+- Pipeline de tag
+
+Push
+===
+build staging
+
+Tag
+====
+- Build
+- Publish
+- Deploy aws
+- smoke tests
+- rollback if need
+
+Develop & Master
+===
+
+Push develop
+Push master
 

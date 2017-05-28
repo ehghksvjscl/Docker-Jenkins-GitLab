@@ -8,7 +8,7 @@ services:
       - jenkins
       - gitlab
     volumes: 
-      # - ./nginx/jenkins.conf:/etc/nginx/conf.d/jenkins.conf
+      - ./nginx/jenkins.conf:/etc/nginx/conf.d/jenkins.conf
       - ./nginx/gitlab.conf:/etc/nginx/conf.d/gitlab.conf
     ports:
      - 80:80

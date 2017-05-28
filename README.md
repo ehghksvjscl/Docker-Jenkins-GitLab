@@ -10,10 +10,8 @@ git remote add origin http:root@gitlab/root/todo-app.git
 
 1. Alterar branch default para develop
 
-
-
-
 Criar Job no Jenkins
+
 =====http:gitlab/root/todo-app.git=
 Configurar Job 
 adicinar credenciais
@@ -129,6 +127,8 @@ node(){
 Pipeline Production
 ======
 Criar credenciais para download do Oracle JDK
+http://jenkins:8080/descriptorByName/hudson.tools.JDKInstaller/credentialOK
+
 Criar um no na AWS
 http://jenkins:8080/computer/createItem
 

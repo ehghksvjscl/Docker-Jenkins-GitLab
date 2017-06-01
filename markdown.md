@@ -6,6 +6,12 @@ class: center, bottom
 .right[![Jenkins-Docker](http://localhost:8000/assets/images/jenkins.png)]
 
 ---
+# Bernardo Vale
+
+DevOps Engineer @ Avenue Code
+
+---
+
 # Objetivo
 
 Criar uma pipeline completa utilizando _Pipeline as Code_ com Jenkins e Docker como
@@ -24,6 +30,43 @@ Algumas etapas da configuração já foram feitas por não encaixarem no tempo d
 
 ---
 
+# Quiz Time!
+
+???
+1. Quantos conhecem docker
+1. Usam docker para testes
+1. Usam docker em produção
+1. Jenkins?
+1. Pipeline as code
+
+---
+
+
+# Docker
+
+Docker é uma plataforma que permite isolar aplicações em **containers**.
+
+Isso significa que: 
+
+Todos os componentes necessários para sua aplicação funcionar estarão dentro do **container**.
+
+???
+Container = pedaço isolado do kernel com mem/cpu controlados e com seu proprio filesystem executando
+alguma coisa (app).
+
+--
+
+Desenvolvedores utiliza Docker para eliminar o famoso "Funciona na minha máquina"!
+
+--
+
+DevOps/Sysadmins utilizam Docker para executar e gerenciar aplicações
+
+--
+
+QA's usam Docker para simplicar a execução de seus testes automatizados.
+
+---
 
 class: left, middle
 background-position: bottom;
@@ -42,7 +85,7 @@ Para dar tempo, vamos ignorar algumas boas práticas do git-flow
 Pipeline develop:
 
 unit, functional, deploy staging, publish artifacts
-  
+
 --
 1. Acionada após `push` na branch `master`
 
@@ -70,30 +113,6 @@ Explicar que as coisas podem quebrar, vamos concertar.
 Podemos recorrer a replays
 
 ---
+class: middle, bottom
 
-# Quiz Time!
-
-???
-1. Quantos conhecem docker
-1. Usam docker para testes
-1. Usam docker em produção
-1. Jenkins?
-1. Pipeline as code
-
----
-
-# Docker
-
-Docker é uma plataforma que permite isolar aplicações em **containers**.
-
-Isso significa que: 
-
-Todos os componentes necessários para sua aplicação funcionar estarão dentro do **container**.
-
---
-
-Desenvolvedores utiliza Docker para eliminar o famoso "Funciona na minha máquina"!
-
---
-
-DevOps/Sysadmins utilizam Docker para executar e gerenciar aplicações
+# Thank You!

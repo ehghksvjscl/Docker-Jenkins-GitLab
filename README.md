@@ -1,20 +1,20 @@
-
-1. Iniciar o ambiente
-
 Adicionar o repositório ao gitlab
 ====
 
-1. create a project on gitlab
+1. Criar projeto todo-app no gitlab
 
 git remote add origin http:root@gitlab/root/todo-app.git
 
 1. Alterar branch default para develop
+1. Publicar codigo git para a branch develop
 
-Criar Job no Jenkins
 
-=====http:gitlab/root/todo-app.git=
+Criar Job no Jenkins Branch Develop
+====
+
+=====http:root@gitlab/root/todo-app.git
 Configurar Job 
-adicinar credenciais
+Configurar credenciais
 
 
 Iniciar Jenkinsfile
@@ -40,13 +40,13 @@ Adicionar Build Section
 ======
 ```groovy
 #!groovy
-node(){
+node {
     stage('Checkout'){
-        checkout scm
+          checkout scm
     }
     stage('Build'){
       gitCommit = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
-      sh "docker build -f ci/staging/Dockerfile -t todo-staging:${gitCommit} ."
+      app = docker.build("bernardovale/todo-app:${gitCommit}", "-f ci/staging/Dockerfile ${WORKSPACE}")
     }
 }
 ```
@@ -55,16 +55,19 @@ Executando Testes Unitarios
 =====
 ```groovy
 #!groovy
-node(){
+node {
     stage('Checkout'){
-        checkout scm
+          checkout scm
     }
     stage('Build'){
       gitCommit = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
-      sh "docker build -f ci/staging/Dockerfile -t todo-staging:${gitCommit} ."
+      app = docker.build("bernardovale/todo-app:${gitCommit}", "-f ci/staging/Dockerfile ${WORKSPACE}")
     }
     stage('Unit Tests'){
-      sh "docker run --rm -i todo-staging:${gitCommit} pytest tests/unit"
+      app.inside{
+        sh 'pytest tests/unit --junit-xml results/unit.xml'
+        junit '**/results/*.xml'
+      }
     }
 }
 ```
@@ -74,19 +77,22 @@ Deployando Staging
 
 ```groovy
 #!groovy
-node(){
+node {
     stage('Checkout'){
-        checkout scm
+          checkout scm
     }
     stage('Build'){
       gitCommit = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
-      sh "docker build -f ci/staging/Dockerfile -t todo-staging:${gitCommit} ."
+      app = docker.build("bernardovale/todo-app:${gitCommit}", "-f ci/staging/Dockerfile ${WORKSPACE}")
     }
     stage('Unit Tests'){
-      sh "docker run --rm -i todo-staging:${gitCommit} pytest tests/unit"
+      app.inside{
+        sh 'pytest tests/unit --junit-xml results/unit.xml'
+        junit '**/results/*.xml'
+      }
     }
     stage('Deploy Staging'){
-      sh "GIT_COMMIT=${gitCommit} docker-compose -f staging.yml up -d"
+      sh "GIT_COMMIT=${gitCommit} docker-compose -p todo -f staging.yml up -d"
     }
 }
 ```
@@ -95,76 +101,206 @@ Testes Funcionais
 =====
 ```groovy
 #!groovy
-node(){
+node {
     stage('Checkout'){
-        checkout scm
+          checkout scm
     }
     stage('Build'){
       gitCommit = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
-      sh "docker build -f ci/staging/Dockerfile -t todo-staging:${gitCommit} ."
+      app = docker.build("bernardovale/todo-app:${gitCommit}", "-f ci/staging/Dockerfile ${WORKSPACE}")
     }
     stage('Unit Tests'){
-      sh "docker run --rm -i todo-staging:${gitCommit} pytest tests/unit"
+      app.inside{
+        sh 'pytest tests/unit --junit-xml results/unit.xml'
+        junit '**/results/*.xml'
+      }
     }
     stage('Deploy Staging'){
-      sh "GIT_COMMIT=${gitCommit} docker-compose -f staging.yml up -d"
+      sh "GIT_COMMIT=${gitCommit} docker-compose -p todo -f staging.yml up -d"
     }
-    stage('Funcional Tests'){
-       mongo = sh(returnStdout: true, script: 'docker run -d mongo').trim()
-       def workspace = pwd()
-       sh 'mkdir -p results'
-       // Volumes mounted from Jenkins container
-       sh "docker run --rm -e MONGODB_HOST=mongo --link ${mongo}:mongo --volumes-from jenkins -i todo-staging:${gitCommit} pytest --junit-xml /results/result.xml"
-       // Copying results
-       sh 'cp /results/result.xml results/'
-       sh "docker rm -f ${mongo}"
-       // Archiving Junit result
-       junit '**/results/*.xml'
-     }
+    stage('Functional Tests'){
+        docker.image('mongo').withRun(){ m ->
+          app.inside("-e MONGODB_HOST=mongo -e APP_ENV=staging --link ${m.id}:mongo"){
+            sh 'pytest tests/functional --junit-xml results/functional.xml'
+            junit '**/results/*.xml'
+          }
+        }
+    }
+}
+```
+
+Publish Image
+====
+
+```groovy
+#!groovy
+node(){
+    stage('Checkout'){
+          checkout scm
+    }
+    stage('Build'){
+      gitCommit = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
+      app = docker.build("bernardovale/todo-app:${gitCommit}", "-f ci/staging/Dockerfile ${WORKSPACE}")
+    }
+    stage('Unit Tests'){
+      app.inside{
+        sh 'pytest tests/unit --junit-xml results/unit.xml'
+        junit '**/results/*.xml'
+      }
+    }
+    stage('Deploy Staging'){
+      sh "GIT_COMMIT=${gitCommit} docker-compose -p todo -f staging.yml up -d"
+    }
+    stage('Functional Tests'){
+        docker.image('mongo').withRun(){ m ->
+          app.inside("-e MONGODB_HOST=mongo -e APP_ENV=staging --link ${m.id}:mongo"){
+            sh 'pytest tests/functional --junit-xml results/functional.xml'
+            junit '**/results/*.xml'
+          }
+        }
+    }
+    // Define Docker hub credentials jenkins/configure
+    stage('Publish'){
+      docker.withRegistry("https://index.docker.io/v1/", 'docker-registry-login') {
+        app.push()
+      }
+    }
 }
 ```
 
 Pipeline Production
 ======
-Criar credenciais para download do Oracle JDK
-http://jenkins:8080/descriptorByName/hudson.tools.JDKInstaller/credentialOK
-
-Criar um no na AWS
-http://jenkins:8080/computer/createItem
+Criar novo Job para production build from master
 
 
+Checkout & Build
+=====
+```groovy
+#!groovy
+node('master'){
+    stage('Checkout'){
+          checkout scm
+    }
+    stage('Build'){
+      gitCommit = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
+      app = docker.build("bernardovale/todo-app:${gitCommit}", "-f ci/production/Dockerfile ${WORKSPACE}")
+    }
+}
+```
 
-Introduzindo um Bug
+Acceptance Tests
 ======
-Intruduzir um bug, e fazer rollback da aplicação
+```groovy
+#!groovy
+node('master'){
+    stage('Checkout'){
+          checkout scm
+    }
+    stage('Build'){
+      gitCommit = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
+      app = docker.build("bernardovale/todo-app:${gitCommit}", "-f ci/production/Dockerfile ${WORKSPACE}")
+    }
+    stage('Acceptance Tests'){
+      dir('tests/acceptance'){
+        docker.image('mongo').withRun('--network agile --name mongo-accept'){ m ->
+          app.withRun("--network agile --name todo-accept -e MONGODB_HOST=mongo-accept -e APP_ENV=production"){
+            try{
+              sh 'docker-compose build'  
+              sh 'URL=http://todo-accept:8001 docker-compose run --rm cuchromer features'
+            }finally{
+              sh 'docker-compose down'
+            }
+          }
+        }
+      }
+    }
+}
+```
+
+Publish
+========
+```groovy
+#!groovy
+node('master'){
+    stage('Checkout'){
+          checkout scm
+    }
+    stage('Build'){
+      gitCommit = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
+      app = docker.build("bernardovale/todo-app:${gitCommit}", "-f ci/production/Dockerfile ${WORKSPACE}")
+    }
+    stage('Acceptance Tests'){
+      dir('tests/acceptance'){
+        docker.image('mongo').withRun('--network agile --name mongo-accept'){ m ->
+          app.withRun("--network agile --name todo-accept -e MONGODB_HOST=mongo-accept -e APP_ENV=production"){
+            try{
+              sh 'docker-compose build'  
+              sh 'URL=http://todo-accept:8001 docker-compose run --rm cuchromer features'
+            }finally{
+              sh 'docker-compose down'
+            }
+          }
+        }
+      }
+    }
+    stage('Publish'){
+      appVersion = input(
+        id: 'userInput', message: 'Publish new version', parameters: [
+        [$class: 'TextParameterDefinition', description: 'App Version', name: 'version']
+      ])
+      docker.withRegistry("https://index.docker.io/v1/", 'registry') {
+        app.push(appVersion)
+      }
+    }
+}
+```
+
+Deploy Production
+======
+
+```groovy
+#!groovy
+node('master'){
+    stage('Checkout'){
+          checkout scm
+    }
+    stage('Build'){
+      gitCommit = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
+      app = docker.build("bernardovale/todo-app:${gitCommit}", "-f ci/production/Dockerfile ${WORKSPACE}")
+    }
+    stage('Acceptance Tests'){
+      dir('tests/acceptance'){
+        docker.image('mongo').withRun('--network agile --name mongo-accept'){ m ->
+          app.withRun("--network agile --name todo-accept -e MONGODB_HOST=mongo-accept -e APP_ENV=production"){
+            try{
+              sh 'docker-compose build'  
+              sh 'URL=http://todo-accept:8001 docker-compose run --rm cuchromer features'
+            }finally{
+              sh 'docker-compose down'
+            }
+          }
+        }
+      }
+    }
+    stage('Publish'){
+      appVersion = input(
+        id: 'userInput', message: 'Publish new version', parameters: [
+        [$class: 'TextParameterDefinition', description: 'App Version', name: 'version']
+      ])
+      docker.withRegistry("https://index.docker.io/v1/", 'registry') {
+        app.push(appVersion)
+      }
+    }
+    stage('Deploy'){
+      withDockerServer([credentialsId: 'docker.internal', uri: 'tcp://docker.internal.avenuecode.com:2376']) {
+        sh "APP_VERSION=${appVersion} docker-compose -f production.yml up -d"
+      }
+    }
+}
+```
 
 
 Plugins
 ====
 - Gitlab Hook Plugin
-- PlueOcean
-
-Unico Branch
-====
-
-- Pipeline de push
-- Pipeline de tag
-
-Push
-===
-build staging
-
-Tag
-====
-- Build
-- Publish
-- Deploy aws
-- smoke tests
-- rollback if need
-
-Develop & Master
-===
-
-Push develop
-Push master
-
+- BlueOcean

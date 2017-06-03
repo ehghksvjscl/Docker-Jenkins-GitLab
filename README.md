@@ -1,6 +1,12 @@
 Adicionar o repositório ao gitlab
 ====
 
+```
+SLIDES 5 MIN
+DEV PIPELINE 25 - 30
+PROD PIPELINE 15
+```
+
 1. Criar projeto todo-app no gitlab
 
 git remote add origin http:root@gitlab/root/todo-app.git
@@ -161,7 +167,7 @@ node(){
     }
     // Define Docker hub credentials jenkins/configure
     stage('Publish'){
-      docker.withRegistry("https://index.docker.io/v1/", 'docker-registry-login') {
+      docker.withRegistry("https://index.docker.io/v1/", 'registry') {
         app.push()
       }
     }
@@ -217,7 +223,7 @@ node('master'){
 }
 ```
 
-Publish
+Publish & Deploy
 ========
 ```groovy
 #!groovy
@@ -250,50 +256,6 @@ node('master'){
       ])
       docker.withRegistry("https://index.docker.io/v1/", 'registry') {
         app.push(appVersion)
-      }
-    }
-}
-```
-
-Deploy Production
-======
-
-```groovy
-#!groovy
-node('master'){
-    stage('Checkout'){
-          checkout scm
-    }
-    stage('Build'){
-      gitCommit = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
-      app = docker.build("bernardovale/todo-app:${gitCommit}", "-f ci/production/Dockerfile ${WORKSPACE}")
-    }
-    stage('Acceptance Tests'){
-      dir('tests/acceptance'){
-        docker.image('mongo').withRun('--network agile --name mongo-accept'){ m ->
-          app.withRun("--network agile --name todo-accept -e MONGODB_HOST=mongo-accept -e APP_ENV=production"){
-            try{
-              sh 'docker-compose build'  
-              sh 'URL=http://todo-accept:8001 docker-compose run --rm cuchromer features'
-            }finally{
-              sh 'docker-compose down'
-            }
-          }
-        }
-      }
-    }
-    stage('Publish'){
-      appVersion = input(
-        id: 'userInput', message: 'Publish new version', parameters: [
-        [$class: 'TextParameterDefinition', description: 'App Version', name: 'version']
-      ])
-      docker.withRegistry("https://index.docker.io/v1/", 'registry') {
-        app.push(appVersion)
-      }
-    }
-    stage('Deploy'){
-      withDockerServer([credentialsId: 'docker.internal', uri: 'tcp://docker.internal.avenuecode.com:2376']) {
-        sh "APP_VERSION=${appVersion} docker-compose -f production.yml up -d"
       }
     }
 }

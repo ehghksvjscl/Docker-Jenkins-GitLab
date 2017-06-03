@@ -5,28 +5,21 @@ class: center, bottom
 
 .right[![Jenkins-Docker](http://localhost:8000/assets/images/jenkins.png)]
 
----
-# Bernardo Vale
+???
 
 DevOps Engineer @ Avenue Code
 
----
+Trabalho com as tecnologias há alguns anos
 
-# Objetivo
-
-Criar uma pipeline completa utilizando _Pipeline as Code_ com Jenkins e Docker como
+1. Criar uma pipeline completa utilizando Jenkins, Gitlab, Docker como
 plataforma do projeto.
 
---
+1. Demonstrar como Docker pode facilitar sua vida.
 
-Demonstrar como Docker pode facilitar sua vida.
+1. Conceitos e tecnologias serão introduzidos enquanto escrevemos a pipeline.
 
---
+1. Algumas etapas da configuração já foram feitas por não encaixarem no tempo da talk.
 
-???
-Conceitos e tecnologias serão introduzidos enquanto escrevemos a pipeline.
-
-Algumas etapas da configuração já foram feitas por não encaixarem no tempo da talk.
 
 ---
 
@@ -52,19 +45,32 @@ Todos os componentes necessários para sua aplicação funcionar estarão dentro
 
 ???
 Container = pedaço isolado do kernel com mem/cpu controlados e com seu proprio filesystem executando
-alguma coisa (app).
+alguma coisa (app). CONTAINERS TEM SOMENTE UMA RESPONSABILIDADE
 
 --
 
-Desenvolvedores utiliza Docker para eliminar o famoso "Funciona na minha máquina"!
+#### Build
+
+Constroi sua aplicação utilizando uma série de passos descritos em um arquivo chamado `Dockerfile`
+
+???
+Receita de bolo para instalar sua aplicação
 
 --
 
-DevOps/Sysadmins utilizam Docker para executar e gerenciar aplicações
+#### Push/Ship
+
+Envia a sua aplicação para um local centralizado onde todos poderam baixa-la.
+
+???
+Colaboração
 
 --
 
-QA's usam Docker para simplicar a execução de seus testes automatizados.
+#### Run
+
+Execute a sua aplicação da mesma forma em qualquer lugar
+
 
 ---
 

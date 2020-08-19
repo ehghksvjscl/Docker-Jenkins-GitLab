@@ -1,3 +1,11 @@
+
+# Release
+* 2020.8.19 빌드 안되는거 수정했고, clone해서 springgos로 이관함.
+---
+# 해야할일
+* README.md 수정해야함. (아래 무슨말인지...)
+---
+
 Adicionar o repositório ao gitlab
 ====
 

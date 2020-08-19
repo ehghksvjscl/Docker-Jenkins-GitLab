@@ -14,13 +14,15 @@ services:
     ports:
      - 80:80
 
-
   jenkins:
     container_name: jenkins
     image: jenkins
     build: 
       dockerfile: jenkins/Dockerfile
       context: .
+    environment:
+      ENVSUBST_VARS: FQDN
+      FQDN: localhost
     ports: 
       - 50000:50000
       - 8080:8080
@@ -33,11 +35,16 @@ services:
   gitlab:
     container_name: gitlab
     image: gitlab/gitlab-ce
+    environment:
+      ENVSUBST_VARS: FQDN
+      FQDN: localhost
     volumes: 
       - ./gitlab/config:/etc/gitlab
       - ./gitlab/logs:/var/log/gitlab
       - ./gitlab/data:/var/opt/gitlab
     restart: always
+    ports:
+      - 8100:8100
 
 volumes: 
   jenkins_data:
